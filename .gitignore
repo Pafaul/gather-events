@@ -1,0 +1,12 @@
+# Default files
+.git/
+go.sum
+vendor/
+
+# app-specific
+abis/*
+gather-events
+
+# used configs
+*.yaml
+*.yml
