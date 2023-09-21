@@ -1,6 +1,5 @@
 # Default files
 .git/
-go.sum
 vendor/
 
 # app-specific
