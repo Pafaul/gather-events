@@ -56,22 +56,24 @@ func (erc721 *ERC721EventCollector) StartEventCollector(stopChannel <-chan bool,
 		case <-stopChannel:
 			return
 		case txLog := <-erc721.logsReceiver:
-			var logErr error
+			if txLog.Address.Hex() == erc721.Address().Hex() {
+				var logErr error
 
-			switch txLog.Topics[0].Hex() {
-			case erc721TransferHash.Hex():
-				transfer, err := erc721Contract.ParseTransfer(txLog)
-				if err != nil {
-					errorChannel <- formatECError("ERC721Transfer", &erc721.eventCollector, &txLog, err)
+				switch txLog.Topics[0].Hex() {
+				case erc721TransferHash.Hex():
+					transfer, err := erc721Contract.ParseTransfer(txLog)
+					if err != nil {
+						errorChannel <- formatECError("ERC721Transfer", &erc721.eventCollector, &txLog, err)
+					}
+					logErr = logERC721Transfer(erc721.contractDBId, transfer)
 				}
-				logErr = logERC721Transfer(erc721.contractDBId, transfer)
-			}
 
-			if logErr != nil {
-				errorChannel <- logErr
-			}
+				if logErr != nil {
+					errorChannel <- logErr
+				}
 
-			erc721.lastKnownBlock = txLog.BlockNumber
+				erc721.lastKnownBlock = txLog.BlockNumber
+			}
 		}
 	}
 }

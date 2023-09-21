@@ -119,9 +119,12 @@ func (l *logsCollector) startLogsCollection(ctx context.Context, startBlock uint
 
 			if len(logs) != 0 {
 				for id := range logs {
-					go func(log types.Log) {
-						l.logsChannel <- log
-					}(logs[id])
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						l.logsChannel <- logs[id]
+					}
 				}
 			}
 

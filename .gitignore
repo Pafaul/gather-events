@@ -10,3 +10,6 @@ gather-events
 # used configs
 *.yaml
 *.yml
+
+# db 
+*.sqlite

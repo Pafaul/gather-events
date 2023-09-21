@@ -10,6 +10,7 @@ import (
 
 func main() {
 	db.OpenDBConnection()
+
 	config.ParseConfig()
 
 	providers := config.GetProivders()
@@ -45,7 +46,7 @@ func main() {
 	}
 
 	// TODO: remove time limitations and handle exit gracefully
-	time.Sleep(time.Hour)
+	time.Sleep(time.Second * 5)
 
 	for _, hub := range hubs {
 		hub.StopHub()

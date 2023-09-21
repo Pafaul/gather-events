@@ -19,13 +19,14 @@ type (
 	}
 
 	hub struct {
-		provider          providers.Provider
-		collector         logsource.LogsCollector
-		ctxCancel         context.CancelFunc
-		broadcaster       logsource.LogBroadcaster
-		eventCollectorErr chan error
-		eventCollectors   []eventcollectors.EventCollector
-		stopChannels      []chan bool
+		provider             providers.Provider
+		collectorCtxCancel   context.CancelFunc
+		collector            logsource.LogsCollector
+		broadcasterCtxCancel context.CancelFunc
+		broadcaster          logsource.LogBroadcaster
+		eventCollectorErr    chan error
+		eventCollectors      []eventcollectors.EventCollector
+		stopChannels         []chan bool
 	}
 )
 
@@ -90,12 +91,15 @@ func (h *hub) StartHub() {
 		go collector.StartEventCollector(h.stopChannels[id], h.eventCollectorErr)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	h.ctxCancel = cancel
+	broadcasterCtx, broacasterCancel := context.WithCancel(context.Background())
+	h.broadcasterCtxCancel = broacasterCancel
 
-	h.broadcaster.StartBroadcasting(ctx)
+	collectorCtx, collectorCancel := context.WithCancel(context.Background())
+	h.collectorCtxCancel = collectorCancel
+
+	h.broadcaster.StartBroadcasting(broadcasterCtx)
 	_, logErr := h.collector.CollectLogs(
-		ctx,
+		collectorCtx,
 		getMinLastBlock(h.eventCollectors),
 	)
 
@@ -107,8 +111,8 @@ func (h *hub) StartHub() {
 }
 
 func (h *hub) StopHub() {
-	// TODO: resolve stopping problem
-	h.ctxCancel()
+	h.collectorCtxCancel()
+	h.broadcasterCtxCancel()
 
 	for _, collector := range h.eventCollectors {
 		err := collector.SaveLastKnownBlock()
